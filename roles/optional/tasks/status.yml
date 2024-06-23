@@ -1,0 +1,24 @@
+---
+- name: Get Node Status
+  shell: kubectl get nodes
+  register: status_nodes
+
+- name: Get Pod Status
+  shell: kubectl get pods -A -o wide
+  register: status_pods
+
+- name: Get Helm Namespaces
+  shell: helm list --all-namespaces
+  register: helm_namespaces
+
+- name: Node Status
+  debug:
+    var: status_nodes.stdout_lines
+
+- name: Pods Status
+  debug:
+    var: status_pods.stdout_lines
+
+- name: Helm Namespaces
+  debug:
+    var: helm_namespaces.stdout_lines

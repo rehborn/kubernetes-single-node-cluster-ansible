@@ -1,0 +1,15 @@
+kubernetes_apt_release_key_url: https://pkgs.k8s.io/core:/stable:/v1.30/deb/Release.key
+kubernetes_apt_release_repo: "deb https://pkgs.k8s.io/core:/stable:/v1.30/deb/ /"
+kubernetes_default_network: 192.168.0.0/16
+kubernetes_admin_config: /etc/kubernetes/admin.conf
+
+helm_apt_release_key_url: https://baltocdn.com/helm/signing.asc
+helm_apt_release_repo: "deb https://baltocdn.com/helm/stable/debian/ all main"
+
+calico_operator: https://raw.githubusercontent.com/projectcalico/calico/v3.28.0/manifests/tigera-operator.yaml
+calico_system: https://raw.githubusercontent.com/projectcalico/calico/v3.28.0/manifests/custom-resources.yaml
+calico_binary_url: https://github.com/projectcalico/calico/releases/download/v3.28.0/calicoctl-linux-amd64
+
+etcd_version: v3.4.33
+etcd_download_url: https://github.com/etcd-io/etcd/releases/download/
+

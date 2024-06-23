@@ -1,0 +1,121 @@
+---
+- name: Install Dependencies
+  apt:
+    name:
+      - apt-transport-https
+      - ca-certificates
+      - curl
+      - gpg
+      - net-tools
+    state: present
+    update_cache: true
+
+- name: Add Kubernetes GPG apt Key
+  apt_key:
+    url: "{{ kubernetes_apt_release_key_url }}"
+    state: present
+
+- name: Add Kubernetes Repository
+  apt_repository:
+    repo: "{{ kubernetes_apt_release_repo }}"
+    state: present
+
+- name: Install Dependencies
+  apt:
+    name:
+      - kubectl
+      - kubeadm
+      - kubelet
+    state: present
+    update_cache: true
+
+- name: Mark Dependencies as Hold
+  dpkg_selections:
+    name: "{{ item }}"
+    selection: hold
+  loop:
+    - kubectl
+    - kubeadm
+    - kubelet
+
+- name: Install Bash Completion
+  shell: |
+    mkdir -p /etc/bash_completion.d/
+    kubectl completion bash | sudo tee /etc/bash_completion.d/kubectl > /dev/null
+    chmod a+r /etc/bash_completion.d/kubectl
+
+- name: Enable Kubelet Service
+  systemd_service:
+    name: kubelet
+    enabled: true
+
+# Install container runtime (CRI)
+- name: Install Containerd
+  apt:
+    name: containerd
+    state: present
+
+- name: Setup containerd
+  shell: |
+    mkdir -p /etc/containerd/
+    containerd config default | sudo tee /etc/containerd/config.toml
+    sudo sed -i 's/SystemdCgroup \= false/SystemdCgroup \= true/g' /etc/containerd/config.toml
+
+- name: Enable containerd Service
+  systemd_service:
+    name: containerd
+    enabled: true
+
+- name: Enable IPv4 Forwarding
+  sysctl:
+    name: net.ipv4.ip_forward
+    value: '1'
+    sysctl_set: true
+
+- name: Enable IPv6 Forwarding
+  sysctl:
+    name: net.ipv6.conf.all.forwarding
+    value: '1'
+    sysctl_set: true
+
+# Install CNI
+- name: Install CNI
+  shell: |
+    mkdir -p /usr/lib/cni /etc/cni/net.d
+    curl -L  https://github.com/containernetworking/plugins/releases/download/v1.5.1/cni-plugins-linux-amd64-v1.5.1.tgz -o /tmp/cni-plugins-linux-amd64-v1.5.1.tgz
+    tar xzvf /tmp/cni-plugins-linux-amd64-v1.5.1.tgz -C /usr/lib/cni --strip-components=1
+    rm /tmp/cni-plugins-linux-amd64-v1.5.1.tgz
+
+- name: Create containerd-net.conflist
+  copy:
+    src: templates/10-containerd-net.conflist
+    dest: /etc/cni/net.d/
+
+- name: Initialize Kubernetes
+  shell: |
+    kubeadm init --pod-network-cidr={{ kubernetes_default_network }}
+  timeout: 300
+  ignore_errors: true
+  environment:
+    KUBECONFIG: "{{ kubernetes_admin_config }}"
+
+# W0622 22:52:12.097328   12260 checks.go:844] detected that the sandbox image "registry.k8s.io/pause:3.6" of the container runtime is inconsistent with that used by kubeadm.It is recommended to use "registry.k8s.io/pause:3.9" as the CRI sandbox image.
+#
+#- name: todo
+#  shell: |
+#    mkdir -p $HOME/.kube
+#    cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+#    chown $(id -u):$(id -g) $HOME/.kube/config
+
+# REQUIRES REBOOT AROUND HERE
+# wont start without a reboot
+# TODO:
+
+### Only on single node clusters
+- name: Untaint control plane to allow pod scheduling
+  shell: |
+    kubectl taint nodes --all node-role.kubernetes.io/control-plane- &>/dev/null
+    kubectl label node $(hostname) node-role.kubernetes.io/worker=worker
+  environment:
+    KUBECONFIG: "{{ kubernetes_admin_config }}"
+  tags: ttt

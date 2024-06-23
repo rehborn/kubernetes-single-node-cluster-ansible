@@ -1,0 +1,33 @@
+---
+# observability
+- include: jetstack.yml
+  tags:
+    - jetstack
+    - cert_manager
+
+- include: self_signed.yml
+  tags:
+    - self_signed
+    - cert_manager
+
+#- include: letsencrypt.yml
+#  tags: letsencrypt
+
+- include: metrics.yml
+  tags: metrics
+
+# on production deploy on separated cluster
+- include: pr.yml
+  tags: prometheus
+
+- include: grafana.yml
+  tags: grafana
+
+- include: loki.yml
+  tags: loki
+
+- include: fluentd.yml
+  tags: fluentd
+
+- include: status.yml
+  tags: status

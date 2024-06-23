@@ -1,0 +1,33 @@
+---
+#
+#- name: Use Lets encrypt
+#  shell: |
+#    cat << EOF | kubectl apply -f -
+#    apiVersion: cert-manager.io/v1
+#    kind: ClusterIssuer
+#    metadata:
+#      name: lets-encrypt
+#    spec:
+#      acme:
+#        email: admin@eof.dev
+#        server: https://acme-v02.api.letsencrypt.org/directory
+#        privateKeySecretRef:
+#          # Secret resource that will be used to store the account's private key.
+#          name: lets-encrypt-private-key
+#        # Add a single challenge solver, HTTP01 using nginx
+#        solvers:
+#          - http01:
+#              ingress:
+#                class: ""
+#    EOF
+#- name: Use Lets encrypt
+#  shell: |
+#    cat << EOF | kubectl -n cert-manager apply -f -
+#    apiVersion: v1
+#    kind: Secret
+#    metadata:
+#      name: lets-encrypt-priviate-key
+#    data:
+#      tls.key: (your secret key)
+#    EOF
+

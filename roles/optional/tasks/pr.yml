@@ -1,0 +1,80 @@
+---
+- name: Setup Persistent Volume PV2
+  file:
+    path: /mnt/volumes/pv2
+    state: directory
+    mode: "0777"
+
+- name: Apply Volume PV2
+  shell: |
+    cat << EOF | kubectl apply -f -
+    apiVersion: v1
+    kind: PersistentVolume
+    metadata:
+      name: local-pv2
+    spec:
+      capacity:
+        storage: 10Gi
+      accessModes:
+      - ReadWriteOnce
+      persistentVolumeReclaimPolicy: Retain
+      local:
+        path: /mnt/volumes/pv2
+      nodeAffinity:
+        required:
+          nodeSelectorTerms:
+          - matchExpressions:
+            - key: kubernetes.io/hostname
+              operator: In
+              values:
+              - $HOSTNAME
+    EOF
+
+- name: Setup Persistent Volume PV3
+  file:
+    path: /mnt/volumes/pv3
+    state: directory
+    mode: "0777"
+
+- name: Apply Volume PV3
+  shell: |
+    cat << EOF | kubectl apply -f -
+    apiVersion: v1
+    kind: PersistentVolume
+    metadata:
+      name: local-pv3
+    spec:
+      capacity:
+        storage: 10Gi
+      accessModes:
+      - ReadWriteOnce
+      persistentVolumeReclaimPolicy: Retain
+      local:
+        path: /mnt/volumes/pv3
+      nodeAffinity:
+        required:
+          nodeSelectorTerms:
+          - matchExpressions:
+            - key: kubernetes.io/hostname
+              operator: In
+              values:
+              - $HOSTNAME
+    EOF
+
+- name: Add Prometheus Repository for Helm
+  shell: |
+    helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+    helm repo update
+  tags: tt
+
+- name: Deploy Prometheus with Helm
+  shell: |
+    helm upgrade -n observability \
+        --wait \
+        --atomic \
+        --create-namespace \
+        --set server.ingress.enabled=true \
+        --set server.ingress.hosts[0]="prometheus.kubernetes.local" \
+        prometheus prometheus-community/prometheus \
+        --install
+  timeout: 300

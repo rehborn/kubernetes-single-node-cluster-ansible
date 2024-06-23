@@ -1,0 +1,14 @@
+---
+- hosts: kubernetes
+  become: yes
+  gather_facts: no
+  roles:
+    - role: core
+      tags:
+        - setup-core
+
+    - role: optional
+      environment:
+        KUBECONFIG: "{{ kubernetes_admin_config }}"
+      tags:
+        - setup-optional

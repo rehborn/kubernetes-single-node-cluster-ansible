@@ -1,0 +1,16 @@
+---
+- name: Add Helm GPG apt Key
+  apt_key:
+    url: "{{ helm_apt_release_key_url }}"
+    state: present
+
+- name: Add Helm Repository
+  apt_repository:
+    repo: "{{ helm_apt_release_repo }}"
+    state: present
+
+- name: Install Helm
+  apt:
+    name: helm
+    state: present
+    update_cache: true

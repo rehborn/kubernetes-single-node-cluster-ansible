@@ -1,0 +1,13 @@
+---
+- name: Install Calico Operator and System
+  shell: |
+    kubectl create -f "{{ calico_operator }}"
+    kubectl create -f "{{ calico_system }}"
+  environment:
+    KUBECONFIG: "{{ kubernetes_admin_config }}"
+
+- name: Add Calico Kubernetes Plugin
+  get_url:
+    url: "{{ calico_binary_url }}"
+    dest: /usr/local/bin/kubectl-calico
+    mode: "0755"

@@ -1,0 +1,22 @@
+---
+- name: Add ingress-nginx Repository
+  shell: |    
+    helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
+    helm repo update
+
+- name: Deploy ingress-nginx
+  shell: |
+    helm upgrade -n ingress-nginx --create-namespace \
+        --install --wait --atomic \
+        --set controller.kind=DaemonSet \
+        --set controller.ingressClass=default \
+        --set controller.watchIngressWithoutClass=true \
+        --set controller.service.enabled=false \
+        --set controller.hostPort.enabled=true \
+        --set controller.extraArgs.publish-status-address=127.0.0.1 \
+        ingress-nginx ingress-nginx/ingress-nginx
+  timeout: 300
+  tags: ingress
+  environment:
+    KUBECONFIG: "{{ kubernetes_admin_config }}"
+

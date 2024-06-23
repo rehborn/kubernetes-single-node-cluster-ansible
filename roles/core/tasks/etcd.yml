@@ -1,0 +1,22 @@
+---
+- name: Download etcdctl
+  get_url:
+    url: "{{ etcd_download_url }}/{{ etcd_version }}/etcd-{{ etcd_version }}-linux-amd64.tar.gz"
+    dest: /tmp/
+
+- name: Decompress Archive
+  unarchive:
+    remote_src: yes
+    src: "/tmp/etcd-{{ etcd_version }}-linux-amd64.tar.gz"
+    dest: /tmp/
+
+- name: Copy Binary
+  copy:
+    remote_src: yes
+    src: "/tmp/etcd-{{ etcd_version }}-linux-amd64/etcdctl"
+    dest: /usr/local/bin
+    mode: "0755"
+
+- name: Cleanup Tempfiles
+  shell: |
+    rm -rf /tmp/etcd-*

@@ -1,0 +1,49 @@
+---
+- hosts: kubernetes
+  become: yes
+  gather_facts: no
+  vars:
+    kubernetes_admin_config: /etc/kubernetes/admin.conf
+  environment:
+    KUBECONFIG: "{{ kubernetes_admin_config }}"
+  tasks:
+    - name: Rollback Helm Charts and resetting Kubernetes
+      shell: |
+        helm uninstall grafana -n observability
+        helm uninstall prometheus -n observability
+        helm uninstall loki -n observability
+        helm uninstall cert-manager -n cert-manager
+        helm uninstall ingress-nginx -n ingress-nginx
+        helm uninstall metrics-server -n kube-system
+        helm list --all-namespaces
+        echo "y" | kubeadm reset
+      ignore_errors: true
+
+    - name: Mark Dependencies as Install
+      dpkg_selections:
+        name: "{{ item }}"
+        selection: install
+      loop:
+        - kubectl
+        - kubeadm
+        - kubelet
+
+    - name: Remove Packages
+      apt:
+        name:
+          - kubectl
+          - kubeadm
+          - kubelet
+          - containerd
+          - kubelet
+          - helm
+        state: absent
+        purge: true
+
+    - name: Cleanup Binaries and Configuration Directories
+      shell: |
+        rm -rf /usr/bin/cni /usr/lib/cni /etc/cni/net.d
+        rm -f /usr/local/bin/etcdctl
+        rm -f /usr/local/bin/kubectl-calico
+
+      ignore_errors: true

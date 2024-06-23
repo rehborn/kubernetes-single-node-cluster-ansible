@@ -1,0 +1,19 @@
+---
+- name: Copy fluentd._dsyml
+  copy:
+    src: templates/fluentd_ds.yml
+    dest: /tmp/
+
+- name: Copy fluentd_configmap.yml
+  copy:
+    src: templates/fluentd_configmap.yml
+    dest: /tmp/
+
+- name: Deploy Fluentd
+  shell: |
+    cd /tmp
+    kubectl -n observability apply -f fluentd_configmap.yml -f fluentd_ds.yml
+
+- name: Cleanup Tempfiles
+  shell: |
+    rm -rf /tmp/fluentd*
